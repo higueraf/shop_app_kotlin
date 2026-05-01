@@ -1,0 +1,57 @@
+# === Android / Kotlin ===
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx/
+
+# === Logs ===
+*.log
+
+# === Gradle ===
+.gradle/
+build/
+
+# === Keystore ===
+*.jks
+*.keystore
+
+# === Android Studio ===
+.navigation/
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# === Kotlin ===
+*.kotlin_module
+
+# === Generated files ===
+bin/
+gen/
+out/
+
+# === Firebase / Google Services ===
+google-services.json
+*.json
+
+# === NDK ===
+obj/
+
+# === Fastlane ===
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# === Misc ===
+*.apk
+*.ap_
+*.aab
+
