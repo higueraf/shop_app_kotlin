@@ -10,10 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.shopapp.presentation.components.LoadingScreen
@@ -23,6 +21,12 @@ import com.shopapp.presentation.ui.uipublic.catalog.CatalogScreen
 import com.shopapp.presentation.ui.uipublic.home.HomeScreen
 import com.shopapp.presentation.ui.uipublic.product.ProductDetailScreen
 import com.shopapp.presentation.ui.uipublic.cart.CartBottomSheet
+import com.shopapp.theme.Surface
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import com.shopapp.presentation.ui.client.orders.OrdersScreen
+import com.shopapp.presentation.ui.client.orders.OrderDetailScreen
+import com.shopapp.presentation.ui.client.profile.ProfileScreen
 import com.shopapp.presentation.viewmodel.AuthViewModel
 import com.shopapp.presentation.viewmodel.CartViewModel
 import com.shopapp.theme.Surface
@@ -69,13 +73,13 @@ fun NavGraph(
                 BottomNavBar(
                     navController = navController,
                     cartCount     = cartCount,
-                    onCartClick   = { showCart = true }, // 🔥 clave
+                    onCartClick   = { showCart = true },
                 )
             }
         },
     ) { innerPadding ->
 
-        // 🔥 BottomSheet del carrito
+        // ── BottomSheet del carrito ───────────────────────────
         if (showCart) {
             CartBottomSheet(
                 cartViewModel   = cartViewModel,
@@ -154,43 +158,52 @@ fun NavGraph(
                 )
             }
 
-            // ── PEDIDOS ────────────────────────────
+            // ── ORDERS ─────────────────────────────
             composable(Screen.Orders.route) {
                 if (!isAuthenticated) {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route)
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route)
+                        }
                     }
                 } else {
-                    ScreenWithLogout(
-                        title = "Mis pedidos — M6",
-                        onLogout = {
-                            authViewModel.logout()
-                            navController.navigate(Screen.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                    OrdersScreen(
+                        onOrderClick = { id ->
+                            navController.navigate("orders/$id")
+                        },
                     )
                 }
             }
 
-            // ── PERFIL ─────────────────────────────
+            // ── ORDER DETAIL ───────────────────────
+            composable(
+                route     = "orders/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.IntType }),
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id") ?: return@composable
+                OrderDetailScreen(
+                    orderId = id,
+                    onBack  = { navController.popBackStack() },
+                )
+            }
+
+            // ── PROFILE ────────────────────────────
             composable(Screen.Profile.route) {
                 if (!isAuthenticated) {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route)
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route)
+                        }
                     }
                 } else {
-                    ScreenWithLogout(
-                        title = "Mi perfil — M6",
+                    ProfileScreen(
+                        authViewModel = authViewModel,
                         onLogout = {
-                            authViewModel.logout()
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0) { inclusive = true }
                             }
-                        }
-                    ) {
-                        LoadingScreen("Mi perfil — M6")
-                    }
+                        },
+                    )
                 }
             }
 
