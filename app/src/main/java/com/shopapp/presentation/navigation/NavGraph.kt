@@ -1,37 +1,20 @@
+
 // presentation/navigation/NavGraph.kt
 package com.shopapp.presentation.navigation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import androidx.navigation.*
+import androidx.navigation.compose.*
 import com.shopapp.presentation.components.LoadingScreen
 import com.shopapp.presentation.ui.admin.AdminScaffold
 import com.shopapp.presentation.ui.admin.dashboard.DashboardScreen
+import com.shopapp.presentation.ui.admin.categories.CategoriesAdminScreen
 import com.shopapp.presentation.ui.auth.LoginScreen
 import com.shopapp.presentation.ui.auth.RegisterScreen
 import com.shopapp.presentation.ui.client.orders.OrderDetailScreen
@@ -157,7 +140,7 @@ fun NavGraph(
             }
 
             composable(
-                route     = "product/{id}",
+                route = "product/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.IntType }),
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("id") ?: return@composable
@@ -185,7 +168,7 @@ fun NavGraph(
             }
 
             composable(
-                route     = "orders/{id}",
+                route = "orders/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.IntType }),
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("id") ?: return@composable
@@ -217,9 +200,7 @@ fun NavGraph(
             composable(Screen.AdminDashboard.route) {
                 if (!isStaff) {
                     LaunchedEffect(Unit) {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(0)
-                        }
+                        navController.navigate(Screen.Home.route) { popUpTo(0) }
                     }
                     return@composable
                 }
@@ -235,9 +216,7 @@ fun NavGraph(
                         }
                     },
                     onStoreClick = {
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.AdminDashboard.route) { inclusive = false }
-                        }
+                        navController.navigate(Screen.Home.route)
                     },
                     onLogout = {
                         authViewModel.logout()
@@ -248,26 +227,52 @@ fun NavGraph(
                 ) { padding ->
                     Box(modifier = Modifier.padding(padding)) {
                         DashboardScreen(
-                            onNavigate = { route ->
-                                navController.navigate(route)
-                            },
+                            onNavigate = { route -> navController.navigate(route) }
                         )
                     }
                 }
             }
 
+            // 🔥 REEMPLAZADO SOLO ESTE
+            composable("admin/categories") {
+                if (!isStaff) {
+                    LaunchedEffect(Unit) {
+                        navController.navigate(Screen.Home.route) { popUpTo(0) }
+                    }
+                    return@composable
+                }
+
+                AdminScaffold(
+                    currentRoute = "admin/categories",
+                    user         = currentUser,
+                    title        = "Categorías",
+                    onNavClick   = { route ->
+                        navController.navigate(route) { launchSingleTop = true }
+                    },
+                    onStoreClick = { navController.navigate(Screen.Home.route) },
+                    onLogout     = {
+                        authViewModel.logout()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                ) { padding ->
+                    Box(modifier = Modifier.padding(padding)) {
+                        CategoriesAdminScreen()
+                    }
+                }
+            }
+
+            // placeholders restantes
             listOf(
-                "admin/categories" to "Categorías",
-                "admin/products"   to "Productos",
-                "admin/orders"     to "Pedidos",
-                "admin/users"      to "Usuarios",
+                "admin/products" to "Productos",
+                "admin/orders"   to "Pedidos",
+                "admin/users"    to "Usuarios",
             ).forEach { (route, title) ->
                 composable(route) {
                     if (!isStaff) {
                         LaunchedEffect(Unit) {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(0)
-                            }
+                            navController.navigate(Screen.Home.route) { popUpTo(0) }
                         }
                         return@composable
                     }
@@ -276,15 +281,9 @@ fun NavGraph(
                         currentRoute = route,
                         user         = currentUser,
                         title        = title,
-                        onNavClick   = { r ->
-                            navController.navigate(r) {
-                                launchSingleTop = true
-                            }
-                        },
-                        onStoreClick = {
-                            navController.navigate(Screen.Home.route)
-                        },
-                        onLogout = {
+                        onNavClick   = { r -> navController.navigate(r) { launchSingleTop = true } },
+                        onStoreClick = { navController.navigate(Screen.Home.route) },
+                        onLogout     = {
                             authViewModel.logout()
                             navController.navigate(Screen.Login.route) {
                                 popUpTo(0) { inclusive = true }
@@ -292,50 +291,14 @@ fun NavGraph(
                         },
                     ) { padding ->
                         Box(
-                            modifier         = Modifier
-                                .fillMaxSize()
-                                .padding(padding),
+                            modifier = Modifier.fillMaxSize().padding(padding),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                text  = "$title — próximo módulo",
-                                color = TextSecondary,
-                            )
+                            Text("$title — próximo módulo", color = TextSecondary)
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun ScreenWithLogout(
-    title: String,
-    onLogout: () -> Unit,
-    content: @Composable () -> Unit = {},
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-
-        content()
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(onClick = onLogout) {
-            Text("Cerrar sesión")
         }
     }
 }
