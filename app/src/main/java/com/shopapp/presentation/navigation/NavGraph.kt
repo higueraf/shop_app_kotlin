@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +21,8 @@ import com.shopapp.presentation.ui.auth.LoginScreen
 import com.shopapp.presentation.ui.auth.RegisterScreen
 import com.shopapp.presentation.ui.uipublic.catalog.CatalogScreen
 import com.shopapp.presentation.ui.uipublic.home.HomeScreen
+import com.shopapp.presentation.ui.uipublic.product.ProductDetailScreen
+import com.shopapp.presentation.ui.uipublic.cart.CartBottomSheet
 import com.shopapp.presentation.viewmodel.AuthViewModel
 import com.shopapp.presentation.viewmodel.CartViewModel
 import com.shopapp.theme.Surface
@@ -38,6 +37,9 @@ fun NavGraph(
     val isAuthenticated   by authViewModel.isAuthenticated.collectAsState()
     val isStaff           by authViewModel.isStaff.collectAsState()
     val cartCount         by cartViewModel.totalItems.collectAsState()
+
+    var showCart by remember { mutableStateOf(false) }
+    var confirmedOrderId by remember { mutableStateOf<Int?>(null) }
 
     if (isCheckingSession) {
         LoadingScreen("Iniciando ShopApp...")
@@ -67,11 +69,28 @@ fun NavGraph(
                 BottomNavBar(
                     navController = navController,
                     cartCount     = cartCount,
-                    onCartClick   = { navController.navigate(Screen.Cart.route) },
+                    onCartClick   = { showCart = true }, // 🔥 clave
                 )
             }
         },
     ) { innerPadding ->
+
+        // 🔥 BottomSheet del carrito
+        if (showCart) {
+            CartBottomSheet(
+                cartViewModel   = cartViewModel,
+                isAuthenticated = isAuthenticated,
+                onDismiss       = { showCart = false },
+                onLoginRequired = {
+                    showCart = false
+                    navController.navigate(Screen.Login.route)
+                },
+                onOrderSuccess = { orderId ->
+                    confirmedOrderId = orderId
+                    showCart = false
+                },
+            )
+        }
 
         NavHost(
             navController    = navController,
@@ -112,7 +131,6 @@ fun NavGraph(
                 HomeScreen(
                     onProductClick = { id -> navController.navigate("product/$id") },
                     onCatalogClick = { navController.navigate(Screen.Catalog.route) },
-
                 )
             }
 
@@ -127,20 +145,12 @@ fun NavGraph(
             composable(
                 route     = "product/{id}",
                 arguments = listOf(navArgument("id") { type = NavType.IntType }),
-            ) {
-                LoadingScreen("Detalle de producto — M5")
-            }
-
-            // ── CARRITO ────────────────────────────
-            composable(Screen.Cart.route) {
-                ScreenWithLogout(
-                    title = "Carrito — M5",
-                    onLogout = {
-                        authViewModel.logout()
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id") ?: return@composable
+                ProductDetailScreen(
+                    productId     = id,
+                    onBack        = { navController.popBackStack() },
+                    cartViewModel = cartViewModel,
                 )
             }
 
